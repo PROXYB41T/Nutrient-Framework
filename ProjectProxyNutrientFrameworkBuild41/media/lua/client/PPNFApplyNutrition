@@ -1,0 +1,42 @@
+PPNFApplyNutrition = {}
+
+function PPNFApplyNutrition.applyPPNFScriptNutrition()
+    print("PPNF: Starting nutrition patch...")
+
+    local allItems = getScriptManager():getAllItems()  -- <-- move this up
+
+    print("PPNF: Total script items:", allItems:size())  -- <-- now it works
+
+    for i = 0, allItems:size() - 1 do
+        local scriptItem = allItems:get(i)
+        if scriptItem:getTypeString() == "Food" then
+            local itemName = scriptItem:getFullName()
+            print("PPNF: Found food item:", itemName)
+
+            local cals = scriptItem:getProperty("Calories")
+            if cals then print("  → Setting Calories to", cals) end
+
+            local runtimeItem = InventoryItemFactory.CreateItem(itemName)
+
+            if runtimeItem and instanceof(runtimeItem, "Food") then
+                local food = runtimeItem:getFoodComponent()
+                if food then
+                    local function setIfPresent(prop, setter)
+                        local val = scriptItem:getProperty(prop)
+                        if val then
+                            food[setter](food, tonumber(val))
+                        end
+                    end
+
+                    -- Set core macronutrients
+                    setIfPresent("Calories", "setCalories")
+                    setIfPresent("Protein", "setProteins")
+                    setIfPresent("Carbohydrates", "setCarbohydrates")
+                    setIfPresent("Lipids", "setLipids")
+                end
+            end
+        end
+    end
+end
+
+return PPNFApplyNutrition
